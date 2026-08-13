@@ -450,8 +450,139 @@
 @media(max-width:600px){.container{padding:16px}.upgrade-toolbar{grid-template-columns:1fr}.event-row{padding:12px}.event-info{font-size:.86rem}.event-badge{font-size:.72rem;padding:5px 8px}}
 
   </style>
+
+<style id="celebration-effects">
+/* ===== Celebration Effects ===== */
+#celebrationFX {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+#celebrationFX.active { opacity: 1; }
+
+.celebrate-confetti {
+  position: absolute;
+  top: -24px;
+  width: 9px;
+  height: 16px;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+  will-change: transform, opacity;
+}
+@keyframes confettiFall {
+  0%   { transform: translate3d(0,-30px,0) rotate(0deg); opacity: 1; }
+  75%  { opacity: 1; }
+  100% { transform: translate3d(var(--drift),110vh,0) rotate(var(--spin)); opacity: 0; }
+}
+
+.celebrate-star {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 3px rgba(255,255,255,.9);
+  animation: starPop 1.4s ease-out forwards;
+}
+@keyframes starPop {
+  0% { transform: scale(.1); opacity: 0; }
+  25% { transform: scale(1.7); opacity: 1; }
+  100% { transform: scale(.1) translateY(40px); opacity: 0; }
+}
+
+.celebrate-firework {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+}
+.celebrate-firework i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 46px;
+  border-radius: 50%;
+  transform-origin: 50% 100%;
+  background: linear-gradient(to top, transparent, rgba(255,255,255,.95));
+  animation: fireworkRay 1.1s ease-out forwards;
+}
+@keyframes fireworkRay {
+  0% { transform: translate(-50%,-100%) rotate(0deg) scaleY(.1); opacity: 1; }
+  100% { transform: translate(-50%,-100%) rotate(var(--angle)) translateY(-55px) scaleY(1); opacity: 0; }
+}
+
+.celebrate-glow {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: min(55vw, 620px);
+  height: min(55vw, 620px);
+  transform: translate(-50%,-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,230,0,.22), rgba(255,120,0,.10) 35%, transparent 70%);
+  animation: glowPulse 1.8s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(.82); opacity: .45; }
+  50% { transform: translate(-50%,-50%) scale(1.08); opacity: 1; }
+}
+
+#celebrationBanner {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+#celebrationBanner::before,
+#celebrationBanner::after {
+  content: "✨";
+  position: absolute;
+  font-size: 30px;
+  animation: bannerSpark 1.2s ease-in-out infinite alternate;
+}
+#celebrationBanner::before { left: 7%; top: 18%; }
+#celebrationBanner::after { right: 7%; bottom: 12%; animation-delay: .4s; }
+@keyframes bannerSpark {
+  from { transform: scale(.7) rotate(-15deg); opacity: .35; }
+  to   { transform: scale(1.25) rotate(15deg); opacity: 1; }
+}
+
+.celebrate-screen-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  pointer-events: none;
+  background: rgba(255,255,255,.35);
+  animation: screenFlash .55s ease-out forwards;
+}
+@keyframes screenFlash {
+  from { opacity: .9; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #celebrationFX,
+  #celebrationFX *,
+  #celebrationBanner::before,
+  #celebrationBanner::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+</style>
+
 </head>
 <body>
+
+<div id="celebrationFX" aria-hidden="true">
+  <div class="celebrate-glow"></div>
+</div>
+
 
   <div class="container">
     
@@ -1106,19 +1237,34 @@ const V9 = (() => {
   function nextDate(e, current){
     let y=current.getFullYear();
     let d=(e.month===2&&e.day===29)?febDay(y):e.day;
-    let t=new Date(y,e.month-1,d,e.hour||0,0,0);
+    let hour=Number.isFinite(Number(e.hour)) ? Number(e.hour) : 0;
+    let t=new Date(y,e.month-1,d,hour,0,0,0);
     let end=new Date(y,e.month-1,d,23,59,59,999);
+
     if(current>end){
       y++;
       d=(e.month===2&&e.day===29)?febDay(y):e.day;
-      t=new Date(y,e.month-1,d,e.hour||0,0,0);
+      t=new Date(y,e.month-1,d,hour,0,0,0);
     }
     return t;
   }
 
   function isToday(e,current){
     const d=(e.month===2&&e.day===29)?febDay(current.getFullYear()):e.day;
-    return current.getMonth()+1===e.month && current.getDate()===d;
+    if(current.getMonth()+1!==e.month || current.getDate()!==d) return false;
+
+    const startHour = Number.isFinite(Number(e.hour)) ? Number(e.hour) : 0;
+    const start = new Date(
+      current.getFullYear(),
+      e.month-1,
+      d,
+      startHour,
+      0,
+      0,
+      0
+    );
+
+    return current >= start;
   }
 
   function featuredEvent(current){
@@ -1126,13 +1272,17 @@ const V9 = (() => {
     const qk=new Date(y,8,2,0,0,0);
     const kg=new Date(y,8,5,7,0,0);
     const switchAt=new Date(y,8,1,0,0,0);
-    if(current < switchAt){ return eventsData.find(e=>e.id==='khaigiang'); }
-    if(current < new Date(y,8,3,0,0,0) || current < kg){
+    if(current < switchAt){
+      return eventsData.find(e=>e.id==='khaigiang');
+    }
+
+    if(current < new Date(y,8,3,0,0,0)){
       return eventsData.find(e=>e.id==='quockhanh');
     }
-    return [...eventsData]
-      .filter(e=>e.id!=='khaigiang' && e.id!=='quockhanh')
-      .sort((a,b)=>nextDate(a,current)-nextDate(b,current))[0] || eventsData.find(e=>e.id==='khaigiang');
+    const khaiGiang = eventsData.find(e=>e.id==='khaigiang');
+    if(khaiGiang) return khaiGiang;
+
+    return eventsData.find(e=>e.id!=='quockhanh') || eventsData[0];
   }
 
   function lowerEvents(current){
@@ -1148,13 +1298,6 @@ const V9 = (() => {
       const diffB=nextDate(b,current)-current;
       return sort==='farthest' ? diffB-diffA : diffA-diffB;
     });
-    const qi=list.findIndex(e=>e.id==='quockhanh');
-    const ki=list.findIndex(e=>e.id==='khaigiang');
-    if(qi!==-1&&ki!==-1&&qi>ki){
-      const qk=list.splice(qi,1)[0];
-      const newKi=list.findIndex(e=>e.id==='khaigiang');
-      list.splice(newKi,0,qk);
-    }
     return list;
   }
 
@@ -1213,6 +1356,10 @@ const V9 = (() => {
     const title=document.getElementById('featuredTitle');
     const subtitle=document.getElementById('featuredSubtitle');
     const today=isToday(featured,current);
+
+    if(window.triggerCelebrationEffects){
+      window.triggerCelebrationEffects(featured.id, today);
+    }
 
     if(today){
       if(banner.style.display!=='block') banner.style.display='block';
@@ -1292,7 +1439,16 @@ const V9 = (() => {
     window.resetRealTime=reset;
   }
 
-  return {bind,render};
+  function getCelebrationState(){
+    const current = now();
+    const featured = featuredEvent(current);
+    return {
+      today: isToday(featured,current),
+      eventId: featured ? featured.id : null
+    };
+  }
+
+  return {bind,render,getCelebrationState};
 })();
 
 V9.bind();
@@ -1300,5 +1456,137 @@ V9.render();
 setInterval(V9.render,250);
 
 </script>
+
+<script id="celebration-effects-js">
+(() => {
+  let celebrationTimer = null;
+  let currentEventId = null;
+
+  function rand(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  function makeConfetti(count = 125) {
+    const root = document.getElementById('celebrationFX');
+    if (!root) return;
+
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = 'celebrate-confetti';
+      el.style.left = rand(0, 100) + '%';
+      el.style.animationDuration = rand(2.6, 5.2) + 's';
+      el.style.animationDelay = rand(0, 1.2) + 's';
+      el.style.setProperty('--drift', rand(-220, 220) + 'px');
+      el.style.setProperty('--spin', rand(-900, 900) + 'deg');
+      el.style.background = `hsl(${Math.floor(rand(0,360))} 90% 60%)`;
+      root.appendChild(el);
+      setTimeout(() => el.remove(), 7000);
+    }
+  }
+
+  function makeStars(count = 35) {
+    const root = document.getElementById('celebrationFX');
+    if (!root) return;
+
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = 'celebrate-star';
+      el.style.left = rand(5, 95) + '%';
+      el.style.top = rand(8, 85) + '%';
+      el.style.animationDelay = rand(0, .8) + 's';
+      root.appendChild(el);
+      setTimeout(() => el.remove(), 2300);
+    }
+  }
+
+  function makeFirework(x, y) {
+    const root = document.getElementById('celebrationFX');
+    if (!root) return;
+
+    const firework = document.createElement('div');
+    firework.className = 'celebrate-firework';
+    firework.style.left = x + '%';
+    firework.style.top = y + '%';
+
+    for (let i = 0; i < 12; i++) {
+      const ray = document.createElement('i');
+      ray.style.setProperty('--angle', (i * 30) + 'deg');
+      firework.appendChild(ray);
+    }
+
+    root.appendChild(firework);
+    setTimeout(() => firework.remove(), 1300);
+  }
+
+  function screenFlash() {
+    const el = document.createElement('div');
+    el.className = 'celebrate-screen-flash';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 700);
+  }
+
+  function launchCelebration() {
+    const root = document.getElementById('celebrationFX');
+    if (!root) return;
+
+    root.classList.add('active');
+    screenFlash();
+
+    makeConfetti(125);
+    makeStars(35);
+
+    setTimeout(() => makeFirework(18, 30), 150);
+    setTimeout(() => makeFirework(50, 22), 450);
+    setTimeout(() => makeFirework(82, 32), 800);
+
+    setTimeout(() => makeConfetti(70), 1800);
+    setTimeout(() => makeStars(20), 2300);
+
+    setTimeout(() => root.classList.remove('active'), 7000);
+  }
+
+  window.triggerCelebrationEffects = function(eventId, isToday) {
+    if (!isToday || !eventId) return;
+
+    currentEventId = eventId;
+
+    if (!celebrationTimer) {
+      launchCelebration();
+
+      celebrationTimer = setInterval(() => {
+        const v9 = window.V9;
+        if (v9 && typeof v9.getCelebrationState === 'function') {
+          const state = v9.getCelebrationState();
+          if (!state || !state.today || state.eventId !== currentEventId) {
+            clearInterval(celebrationTimer);
+            celebrationTimer = null;
+            return;
+          }
+        }
+        launchCelebration();
+      }, 30000);
+    }
+  };
+
+  document.addEventListener('click', e => {
+    const trigger = e.target.closest(
+      '#celebrationBanner, .celebration-trigger, [data-celebration-trigger]'
+    );
+
+    if (!trigger) return;
+
+    const v9 = window.V9;
+    if (v9 && typeof v9.getCelebrationState === 'function') {
+      const state = v9.getCelebrationState();
+      if (state && state.today && state.eventId) {
+        launchCelebration();
+      }
+    } else {
+      launchCelebration();
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
