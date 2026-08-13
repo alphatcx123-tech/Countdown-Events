@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch Học Sinh - Đếm Ngược & Trải Nghiệm Sự Kiện</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #fff;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-radius: 24px;
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+      margin-top: 10px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    
+    .simulator-card {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .simulator-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #FFE600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .simulator-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .time-picker {
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #333;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .btn-sim {
+      border: none;
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-sim-start {
+      background: #00e676;
+      color: #053b1e;
+    }
+
+    .btn-sim-start:hover {
+      background: #00c853;
+      transform: translateY(-1px);
+    }
+
+    .btn-sim-reset {
+      background: #ff5252;
+      color: #ffffff;
+    }
+
+    .btn-sim-reset:hover {
+      background: #ff1744;
+      transform: translateY(-1px);
+    }
+
+    .sim-status {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #e0e0e0;
+    }
+
+    
+    .featured-card {
+      margin-bottom: 25px;
+    }
+
+    .featured-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .featured-subtitle {
+      font-size: 0.9rem;
+      color: #f3f4f6;
+      margin-bottom: 18px;
+      font-weight: 500;
+    }
+
+    .countdown-boxes {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    .time-box {
+      background: rgba(255, 255, 255, 0.22);
+      padding: 14px 6px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .time-value {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .time-label {
+      font-size: 0.75rem;
+      color: #FFE600;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    
+    .celebration-banner {
+      display: none;
+      background: linear-gradient(90deg, #ff007f, #7928ca, #ff007f);
+      background-size: 200% auto;
+      animation: shine 2s linear infinite;
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 20px;
+      box-shadow: 0 0 20px rgba(255, 230, 0, 0.6);
+      border: 2px solid #FFE600;
+    }
+
+    @keyframes shine {
+      to { background-position: 200% center; }
+    }
+
+    
+    .nav-tabs {
+      display: flex;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 30px;
+      padding: 4px;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 25px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.32);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: #ffffff;
+    }
+
+    
+    .tab-content {
+      display: none;
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .tab-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .tab-content::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 10px;
+    }
+
+    .tab-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 10px;
+    }
+
+    .tab-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 230, 0, 0.8);
+    }
+
+    
+    .event-row {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      text-align: left;
+      transition: transform 0.2s;
+    }
+
+    .event-row:hover {
+      transform: translateY(-2px);
+    }
+
+    .event-info {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .event-badge {
+      background: #fff8bf;
+      color: #3b1578;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid rgba(255, 230, 0, 0.6);
+      white-space: nowrap;
+    }
+
+    .event-badge.active-today {
+      background: #00e676;
+      color: #053b1e;
+      border-color: #fff;
+    }
+
+    
+    .info-card {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 18px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      text-align: left;
+      transition: transform 0.2s;
+    }
+
+    .info-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .info-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #FFE600;
+      margin-bottom: 6px;
+    }
+
+    .info-time {
+      font-size: 0.85rem;
+      color: #fce7f3;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .info-desc {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: #ffffff;
+      margin-bottom: 12px;
+      opacity: 0.95;
+    }
+
+    .btn-detail-link {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #FFE600;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-detail-link:hover {
+      background: rgba(255, 255, 255, 0.35);
+      color: #ffffff;
+    }
+
+    
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: #1f1338;
+      color: #f3f4f6;
+      width: 100%;
+      max-width: 650px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-radius: 24px;
+      padding: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      text-align: left;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #fff;
+      font-size: 1.3rem;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .modal-title {
+      font-size: 1.35rem;
+      color: #FFE600;
+      margin-bottom: 8px;
+      padding-right: 30px;
+    }
+
+    .modal-time {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding-bottom: 10px;
+    }
+
+    .modal-body {
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+
+    .modal-body h4 {
+      color: #00e676;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .modal-body p {
+      margin-bottom: 10px;
+      color: #e2e8f0;
+    }
+
+
+.upgrade-toolbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin:0 0 12px}
+.search-box,.filter-select,.speed-select{min-width:0;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:10px 12px;outline:none}
+.search-box::placeholder{color:rgba(255,255,255,.72)}
+.filter-select option,.speed-select option{color:#222}
+.sim-controls-v9{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0 14px}
+.action-btn-v9{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.13);color:#fff;border-radius:12px;padding:9px 13px;cursor:pointer;font-weight:700}
+.action-btn-v9:hover{background:rgba(255,255,255,.22);transform:translateY(-1px)}
+.sim-clock-v9{text-align:center;margin:-2px 0 10px;font-variant-numeric:tabular-nums;color:#FFE600;font-weight:800}
+@media(max-width:600px){.container{padding:16px}.upgrade-toolbar{grid-template-columns:1fr}.event-row{padding:12px}.event-info{font-size:.86rem}.event-badge{font-size:.72rem;padding:5px 8px}}
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <div class="simulator-card">
+      <div class="simulator-title">🎮 Trải Nghiệm Sự Kiện (Giả Lập Thời Gian)</div>
+      <div class="simulator-controls">
+        <input type="datetime-local" step="1" id="simTimeInput" class="time-picker">
+        
+        <button class="btn-sim btn-sim-start" onclick="startSimulation()">
+          🚀 Trải nghiệm sự kiện
+        </button>
+        
+        <button class="btn-sim btn-sim-reset" onclick="resetRealTime()">
+          🔄 Quay lại thời gian thực
+        </button>
+      </div>
+      <div class="sim-status" id="simStatus">Đang ở: <b>Thời gian thực</b></div>
+    </div>
+
+    <div class="celebration-banner" id="celebrationBanner">
+      🎉 CHÚC MỪNG NGÀY LỄ! 🎉
+    </div>
+
+    <div class="featured-card" id="featuredCard">
+      <div class="featured-title" id="featuredTitle">🔔 Đang tính toán...</div>
+      <div class="featured-subtitle" id="featuredSubtitle">Mục tiêu: --:--</div>
+      
+      <div class="countdown-boxes" id="countdownBoxes">
+        <div class="time-box">
+          <div class="time-value" id="topD">00</div>
+          <div class="time-label">NGÀY</div>
+        </div>
+        <div class="time-box">
+          <div class="time-value" id="topH">00</div>
+          <div class="time-label">GIỜ</div>
+        </div>
+        <div class="time-box">
+          <div class="time-value" id="topM">00</div>
+          <div class="time-label">PHÚT</div>
+        </div>
+        <div class="time-box">
+          <div class="time-value" id="topS">00</div>
+          <div class="time-label">GIÂY</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('tabCountdown', this)">
+        ⏱️ Xem Đếm Ngược Tự Động
+      </button>
+      <button class="tab-btn" onclick="switchTab('tabInfo', this)">
+        ℹ️ Xem Thông Tin & Ý Nghĩa
+      </button>
+    </div>
+
+
+    <div class="upgrade-toolbar">
+      <input id="eventSearch" class="search-box" type="search" placeholder="🔎 Tìm sự kiện..." autocomplete="off">
+      <select id="eventFilter" class="filter-select">
+        <option value="all">Tất cả sự kiện</option>
+        <option value="upcoming">Sắp tới</option>
+        <option value="today">Đang diễn ra</option>
+      </select>
+      <select id="eventSort" class="filter-select">
+        <option value="nearest">⏱️ Gần nhất</option>
+        <option value="farthest">⏳ Lâu nhất</option>
+      </select>
+    </div>
+    <div class="sim-controls-v9">
+      <select id="simSpeed" class="speed-select" aria-label="Tốc độ mô phỏng">
+        <option value="1">Simulation 1×</option>
+        <option value="10">Simulation 10×</option>
+        <option value="60">Simulation 60×</option>
+      </select>
+      <button type="button" class="action-btn-v9" id="nextEventBtn">⏭️ Sự kiện tiếp theo</button>
+      <button type="button" class="action-btn-v9" id="pauseSimBtn">⏸️ Tạm dừng mô phỏng</button>
+    </div>
+    <div class="sim-clock-v9">🕒 <span id="liveClock">--:--:--</span><span id="simSpeedStatus"></span></div>
+
+    <div id="tabCountdown" class="tab-content active"></div>
+
+    <div id="tabInfo" class="tab-content"></div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="if(event.target.id==='modalOverlay') closeModal()">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <h2 class="modal-title" id="mTitle"></h2>
+      <div class="modal-time" id="mTime"></div>
+      <div class="modal-body" id="mBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const eventsData = [
+      {
+        id: "tetduonglich",
+        title: "🎆 Tết Dương Lịch",
+        timeText: "00:00 ngày 01/01 hàng năm",
+        month: 1, day: 1, hour: 0,
+        desc: "Ngày đầu tiên của năm mới theo lịch dương, đánh dấu sự khép lại của năm cũ và mở ra chu kỳ 365 ngày mới tràn đầy hy vọng.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Tết Dương Lịch là dịp lễ toàn cầu để con người trên khắp hành tinh cùng nhìn lại chặng đường đã qua, tổng kết những thành quả và đặt ra các mục tiêu mới cho tương lai.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Học sinh thường được nghỉ học 1 ngày để nghỉ ngơi, tham gia các hoạt động đón năm mới cùng gia đình và bạn bè.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Hãy xem đây là thời điểm lý tưởng để lập kế hoạch học tập, rèn luyện thói quen tốt và quyết tâm chinh phục những cột mốc điểm số cao hơn trong năm mới!</p>
+        `
+      },
+      {
+        id: "hssv",
+        title: "🎓 Ngày Học Sinh - Sinh Viên",
+        timeText: "00:00 ngày 09/01 hàng năm",
+        month: 1, day: 9, hour: 0,
+        desc: "Kỷ niệm Ngày truyền thống Học sinh, Sinh viên và Hội Sinh viên Việt Nam (09/01/1950 - nay).",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Tưởng nhớ phong trào đấu tranh anh dũng, đầy khí phách của phong trào học sinh, sinh viên Sài Gòn - Chợ Lớn trong kháng chiến chống thực dân Pháp.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Tổ chức kết nạp đoàn viên mới, tuyên dương các gương mặt học sinh xuất sắc, các hoạt động văn nghệ thể thao và hội trại truyền thống.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Nâng cao tinh thần tự hào tuổi trẻ, không ngừng trau dồi tri thức, đạo đức để góp sức xây dựng quê hương đất nước giàu đẹp.</p>
+        `
+      },
+      {
+        id: "tetnguyendan",
+        title: "🧧 Tết Nguyên Đán (Tết Cổ Truyền)",
+        timeText: "00:00 Mùng 1 Tết Âm Lịch",
+        month: 1, day: 29, hour: 0,
+        desc: "Kỳ nghỉ lễ lớn thiêng liêng và quan trọng nhất của người Việt Nam, gắn liền với văn hóa sum vầy và hướng về cội nguồn.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Là thời khắc giao mùa giữa năm cũ và năm mới theo Âm lịch, mang ý nghĩa tẩy trừ điều rủi ro, đón nhận may mắn, tài lộc và bình an.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Học sinh được nghỉ học dài ngày (thường từ 1 đến 2 tuần). Các trường tổ chức gói bánh chưng, trang trí hoa mai hoa đào, trao quà Tết cho học sinh có hoàn cảnh khó khăn.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Trân trọng từng khoảnh khắc sum họp bên gia đình, giữ gìn nét đẹp văn hóa truyền thống và chuẩn bị một tinh thần thật sảng khoái để trở lại trường.</p>
+        `
+      },
+      {
+        id: "ngayhoibanhnhangiang",
+        title: "🥟 Ngày Hội Bánh Nhân Giang",
+        timeText: "00:00 ngày 29/02 (hoặc 28/02 nếu không phải năm nhuận)",
+        month: 2, day: 29, hour: 0,
+        desc: "Ngày hội văn hóa ẩm thực đặc sắc tôn vinh các nghệ nhân làm bánh truyền thống, quảng bá các loại bánh dân gian đậm đà hương vị.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Tôn vinh, bảo tồn và phát huy các giá trị ẩm thực truyền thống độc đáo của vùng đất Nhân Giang, gắn kết tình làng nghĩa xóm và lưu truyền tinh hoa qua các thế hệ.</p>
+          <h4>🏫 Hoạt Động Trưng Bày & Trải Nghiệm</h4>
+          <p>Tổ chức các gian hàng ẩm thực phong phú, hội thi gói bánh và làm bánh truyền thống, cùng các hoạt động văn nghệ dân gian sôi nổi, náo nhiệt.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Nuôi dưỡng niềm tự hào với ẩm thực quê hương, khơi dậy sự sáng tạo, tình yêu văn hóa dân tộc và ý thức gìn giữ các giá trị truyền thống tốt đẹp.</p>
+        `
+      },
+      {
+        id: "qtpnu",
+        title: "🌸 Ngày Quốc Tế Phụ Nữ 8/3",
+        timeText: "00:00 ngày 08/03 hàng năm",
+        month: 3, day: 8, hour: 0,
+        desc: "Ngày tôn vinh vẻ đẹp, vai trò và những đóng góp to lớn của phụ nữ trên toàn thế giới.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Kỷ niệm cuộc đấu tranh đòi quyền bình đẳng, quyền lao động và quyền lợi chính đáng của nữ công nhân dệt may tại Mỹ.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Các bạn nam sinh cùng nhau tổ chức chúc mừng, tặng hoa và thiệp handmade cho cô giáo và các bạn nữ trong lớp. Tổ chức các hoạt động hội thi nấu ăn, cắm hoa.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Gửi gắm lòng biết ơn sâu sắc đến các bà, các mẹ, cô giáo và trân trọng, yêu quý hơn những người phụ nữ xung quanh chúng ta.</p>
+        `
+      },
+      {
+        id: "doan263",
+        title: "⚡ Ngày Thành Lập Đoàn (26/03)",
+        timeText: "00:00 ngày 26/03 hàng năm",
+        month: 3, day: 26, hour: 0,
+        desc: "Kỷ niệm ngày thành lập Đoàn TNCS Hồ Chí Minh (26/03/1931), ngày hội lớn của tuổi trẻ học đường.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Khẳng định vai trò xung kích, tình nguyện, sáng tạo của lực lượng thanh niên trong sự nghiệp bảo vệ và xây dựng Tổ quốc.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Tổ chức tháng thanh niên với hội thao, hội trại 26/3, các trò chơi dân gian, cuộc thi rung chuông vàng và kết nạp đoàn cho thanh niên ưu tú.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Phát huy tinh thần nhiệt huyết tuổi trẻ, sống có lý tưởng, hoài bão và dám nghĩ dám làm vì cộng đồng.</p>
+        `
+      },
+      {
+        id: "gioto",
+        title: "⛰️ Lễ Giỗ Tổ Hùng Vương",
+        timeText: "00:00 Mùng 10 tháng 3 Âm Lịch",
+        month: 4, day: 7, hour: 0,
+        desc: "Ngày hội văn hóa tâm linh của toàn dân tộc để tưởng nhớ công ơn dựng nước của các Vua Hùng.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Khắc ghi đạo lý 'Uống nước nhớ nguồn', tôn vinh cội nguồn con Lạc cháu Hồng và lịch sử hào hùng dựng nước giữ nước của cha ông.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Học sinh được nghỉ học 1 ngày. Các trường tổ chức dâng hương, tìm hiểu lịch sử qua các tiết học ngoại khóa và hoạt động trải nghiệm ý nghĩa.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Mỗi học sinh luôn tự hào về dòng máu Lạc Hồng, từ đó phấn đấu học tập tốt để không phụ công ơn dựng nước thế hệ đi trước.</p>
+        `
+      },
+      {
+        id: "chienang",
+        title: "🇻🇳 Giải Phóng Miền Nam (30/04) & Quốc Tế Lao Động (01/05)",
+        timeText: "00:00 ngày 30/04 hàng năm",
+        month: 4, day: 30, hour: 0,
+        desc: "Kỷ niệm Ngày Thống nhất đất nước (30/04/1975) và Ngày Quốc tế Lao động (01/05).",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Chấm dứt chiến tranh, đem lại độc lập, tự do, hòa bình thống nhất cho non sông Việt Nam; đồng thời tôn vinh giai cấp lao động toàn cầu.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Kỳ nghỉ lễ kéo dài giúp học sinh xả hơi, tham gia các chuyến du lịch cùng gia đình hoặc chuẩn bị ôn tập cho kỳ thi học kỳ II sắp tới.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Biết ơn sự hy sinh xương máu của các anh hùng liệt sĩ để chúng ta có cuộc sống hòa bình, tự do học tập hôm nay.</p>
+        `
+      },
+      {
+        id: "snbacho",
+        title: "⭐️ Ngày Sinh Chủ Tịch Hồ Chí Minh (19/05)",
+        timeText: "00:00 ngày 19/05 hàng năm",
+        month: 5, day: 19, hour: 0,
+        desc: "Kỷ niệm Ngày sinh Chủ tịch Hồ Chí Minh vĩ đại - vị lãnh tụ thiên tài của dân tộc Việt Nam.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Tưởng nhớ cuộc đời và sự nghiệp cách mạng vẻ vang của Bác, vị Cha già kính yêu đã hiến dâng cả cuộc đời cho tự do, hạnh phúc của nhân dân.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Tổ chức các buổi kể chuyện về Bác Hồ, hội thi viết thư pháp, tìm hiểu tư tưởng đạo đức Hồ Chí Minh và báo công dâng Bác.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Thực hiện tốt 5 điều Bác Hồ dạy, rèn luyện đạo đức, tác phong và ý thức tự giác trong học tập cũng như cuộc sống.</p>
+        `
+      },
+      {
+        id: "begiang",
+        title: "🎓 Lễ Bế Giảng & Tổng Kết Năm Học",
+        timeText: "07:00 ngày 31/05 hàng năm",
+        month: 5, day: 31, hour: 7,
+        desc: "Buổi lễ tổng kết nhìn lại chặng đường 9 tháng nỗ lực học tập, rèn luyện của thầy và trò trong năm học.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Đánh giá lại những thành quả đã đạt được, vinh danh những học sinh đạt thành tích cao trong học tập và phong trào thi đua.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Phát thưởng học sinh giỏi, học sinh xuất sắc, làm thủ tục bàn giao học sinh về sinh hoạt hè tại địa phương và những dòng lưu bút chia tay đầy bị rưng rưng xúc động.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Khép lại một năm học với nhiều kỷ niệm đẹp, dù kết quả thế nào thì đây cũng là hành trang quý giá để trưởng thành.</p>
+        `
+      },
+      {
+        id: "nghihe",
+        title: "☀️ Bắt Đầu Nghỉ Hè",
+        timeText: "00:00 ngày 31/08 hàng năm",
+        month: 8, day: 31, hour: 0,
+        desc: "Chính thức bước vào kỳ nghỉ hè rực rỡ kéo dài gần 3 tháng với nhiều trải nghiệm thú vị.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Thời gian để học sinh tái tạo lại năng lượng sau một năm học miệt mài, phát triển các kỹ năng mềm và tham gia hoạt động cộng đồng.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Sinh hoạt hè tại địa phương, tham gia các lớp học kỹ năng năng khiếu (bơi lội, đàn, võ thuật, ngoại ngữ) hoặc các chuyến du lịch bổ ích.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Hãy tận hưởng mùa hè an toàn, bổ ích, đọc thêm sách hay và chuẩn bị sức khỏe thật tốt cho năm học mới.</p>
+        `
+      },
+      {
+        id: "thieunhi",
+        title: "🎈 Quốc Tế Thiếu Nhi (01/06)",
+        timeText: "00:00 ngày 01/06 hàng năm",
+        month: 6, day: 1, hour: 0,
+        desc: "Ngày hội lớn dành riêng cho các em thiếu nhi, tuổi thơ hồn nhiên và tràn ngập tiếng cười.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Bảo vệ quyền lợi, chăm sóc và nâng cao đời sống tinh thần cho trẻ em - những mầm non tương lai của đất nước.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Dù bắt đầu kỳ nghỉ hè nhưng nhiều trường học, liên đội vẫn tổ chức các hoạt động vui chơi, tặng quà và phát động tháng hành động vì trẻ em.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Luôn giữ gìn sự hồn nhiên, ngây thơ, nuôi dưỡng những ước mơ lớn và tận hưởng trọn vẹn sự yêu thương của gia đình, xã hội.</p>
+        `
+      },
+      {
+        id: "thithpt",
+        title: "✏️ Kỳ Thi THPT Quốc Gia / Vào Lớp 10",
+        timeText: "07:00 ngày 27/06 hàng năm",
+        month: 6, day: 27, hour: 7,
+        desc: "Kỳ thi cam go và quan trọng mang tính chất bước ngoặt quyết định tấm vé chuyển cấp hoặc vào đại học.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Thử thách lớn đầu đời kiểm tra toàn diện năng lực, kiến thức và bản lĩnh tâm lý của các sĩ tử sau nhiều năm đèn sách.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Tổ chức tiếp sức mùa thi, ôn tập nước rút, chuẩn bị cơ sở vật chất và không khí cổ vũ tinh thần động viên sĩ tử.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Giữ vững tâm lý bình tĩnh, tự tin vào bản thân vì nỗ lực suốt bao năm qua chắc chắn sẽ gặt hái trái ngọt xứng đáng.</p>
+        `
+      },
+      {
+        id: "quockhanh",
+        title: "🇻🇳 Lễ Quốc Khánh (02/09)",
+        timeText: "00:00 ngày 02/09 hàng năm",
+        month: 9, day: 2, hour: 0,
+        desc: "Kỷ niệm Ngày Chủ tịch Hồ Chí Minh đọc bản Tuyên ngôn Độc lập tại quảng trường Ba Đình (02/09/1945).",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Khai sinh ra nước Việt Nam Dân chủ Cộng hòa, đưa nhân dân ta từ thân phận nô lệ trở thành người làm chủ đất nước, làm chủ vận mệnh của mình.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Cả nước rợp bóng cờ hoa. Học sinh được nghỉ lễ dài ngày, tham gia các hoạt động chào mừng và ôn lại truyền thống yêu nước hào hùng.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Biết ơn nền hòa bình độc lập hôm nay, tự hào là người Việt Nam và quyết tâm học tập để xây dựng đất nước ngày càng sánh vai cường quốc năm châu.</p>
+        `
+      },
+      {
+        id: "khaigiang",
+        title: "🔔 Lễ Khai Giảng Năm Học Mới",
+        timeText: "07:00 ngày 30/08 hàng năm",
+        month: 8, day: 30, hour: 7,
+        desc: "Ngày hội toàn dân đưa trẻ đến trường! Tiếng trống trường rộn rã khai phá khởi đầu một năm học mới.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Ghi dấu ngày khai trường lịch sử của nước nhà sau khi giành được độc lập, mở ra cánh cửa tri thức cho các thế hệ học trò.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Lễ hội rực rỡ cờ hoa, học sinh mặc đồng phục mới tươm tất, nghe tiếng trống khai trường vang dội, phát biểu chào mừng và đón chào học sinh khối mới.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Bước vào năm học mới với một tinh thần sảng khoái, tràn đầy năng lượng, quyết tâm đạt kết quả cao nhất trong học tập và rèn luyện.</p>
+        `
+      },
+      {
+        id: "trungthu",
+        title: "🥮 Tết Trung Thu (Rằm Tháng 8 Âm Lịch)",
+        timeText: "00:00 ngày Rằm Tháng 8 Âm Lịch",
+        month: 9, day: 25, hour: 0,
+        desc: "Tết Đoàn viên truyền thống rực rỡ sắc màu của đèn lồng, múa lân và phá cỗ trông trăng.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Dịp để gia đình sum vầy, gắn kết tình thân, tôn vinh nét đẹp văn hóa dân gian đậm đà bản sắc dân tộc Việt Nam.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Tổ chức phá cỗ trông trăng tại lớp học, rước đèn ông sao, thi làm lồng đèn đẹp và thưởng thức các tiết mục múa lân đặc sắc.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Lưu giữ những kỷ niệm tuổi thơ trong trẻo bên thầy cô, bạn bè và người thân dưới ánh trăng rằm tháng Tám.</p>
+        `
+      },
+      {
+        id: "phunu2010",
+        title: "🌹 Ngày Phụ Nữ Việt Nam 20/10",
+        timeText: "00:00 ngày 20/10 hàng năm",
+        month: 10, day: 20, hour: 0,
+        desc: "Kỷ niệm Ngày thành lập Hội Liên hiệp Phụ nữ Việt Nam (20/10/1930) để tôn vinh người phụ nữ Việt.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Tôn vinh phẩm chất cao quý 'Anh hùng, Bất khuất, Trung hậu, Đảm đang' của người phụ nữ Việt Nam trong thời đại mới.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Tổ chức các cuộc thi văn nghệ, làm thiệp chúc mừng, cắm hoa nghệ thuật và gửi những lời chúc tốt đẹp nhất đến cô giáo và bạn nữ sinh.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Luôn trân trọng, yêu quý và biết ơn những hy sinh thầm lặng của các bà, các mẹ và các cô giáo kính yêu.</p>
+        `
+      },
+      {
+        id: "nhagiao",
+        title: "💐 Ngày Nhà Giáo Việt Nam 20/11",
+        timeText: "07:00 ngày 20/11 hàng năm",
+        month: 11, day: 20, hour: 7,
+        desc: "Ngày lễ tri ân sâu sắc các thầy cô giáo - những 'người lái đò thầm lặng' đưa thế hệ trẻ cập bến bờ tri thức.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Phát huy truyền thống tốt đẹp 'Tôn sư trọng đạo', 'Uống nước nhớ nguồn' đã gắn liền với máu thịt của văn hóa dân tộc Việt Nam.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Hội giảng tri ân, hội diễn văn nghệ chào mừng 20/11, tri ân thầy cô giáo cũ và trao những bó hoa tươi thắm cùng lời chúc chân thành nhất.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Mỗi điểm 10, mỗi hành động chăm ngoan chính là món quà tri ân thiết thực và ý nghĩa nhất dâng lên thầy cô giáo.</p>
+        `
+      },
+      {
+        id: "quandoi",
+        title: "⭐ Ngày Thành Lập QĐND Việt Nam (22/12)",
+        timeText: "00:00 ngày 22/12 hàng năm",
+        month: 12, day: 22, hour: 0,
+        desc: "Kỷ niệm Ngày thành lập Quân đội Nhân dân Việt Nam (22/12/1944) và Ngày hội Quốc phòng toàn dân.",
+        details: `
+          <h4>🌟 Ý Nghĩa Lịch Sử & Văn Hóa</h4>
+          <p>Tôn vinh truyền thống hào hùng 'Bộ đội Cụ Hồ', lực lượng vũ trang kiên trung bảo vệ vững chắc biên cương, hải đảo và độc lập Tổ quốc.</p>
+          <h4>🏫 Hoạt Động Trong Nhà Trường</h4>
+          <p>Tổ chức các hoạt động ngoại khóa tìm hiểu lịch sử quân đội, thăm viếng nghĩa trang liệt sĩ, giao lưu với các cựu chiến binh và hội thao quốc phòng.</p>
+          <h4>💡 Thông Điệp Cho Học Sinh</h4>
+          <p>Bồi dưỡng tinh thần yêu nước, ý thức kỷ luật thép và lòng biết ơn đối với những thế hệ cha anh đã ngã xuống vì bình yên đất nước.</p>
+        `
+      }
+    ];
+
+    let isSimulated = false;
+    let timeOffset = 0; 
+    let lastConfettiTime = 0; 
+
+    function getEffectiveNow() {
+      if (!isSimulated) return new Date();
+      return new Date(Date.now() + timeOffset);
+    }
+
+    function initSimInput() {
+      const now = new Date();
+      const localIso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
+      document.getElementById('simTimeInput').value = localIso;
+    }
+
+    function startSimulation() {
+      const val = document.getElementById('simTimeInput').value;
+      if (!val) {
+        alert("Vui lòng chọn thời gian muốn trải nghiệm!");
+        return;
+      }
+      const selectedDate = new Date(val);
+      timeOffset = selectedDate.getTime() - Date.now();
+      isSimulated = true;
+
+      const dateString = selectedDate.toLocaleString('vi-VN');
+      document.getElementById('simStatus').innerHTML = `⚡ Đang giả lập tại mốc: <b style="color: #FFE600;">${dateString}</b>`;
+      
+      updateTimers();
+      renderUI();
+    }
+
+    function resetRealTime() {
+      isSimulated = false;
+      timeOffset = 0;
+      initSimInput();
+      document.getElementById('simStatus').innerHTML = `Đang ở: <b>Thời gian thực</b>`;
+      
+      updateTimers();
+      renderUI();
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function isLeapYear(y) {
+      return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+    }
+
+    function getActualFebDay(year) {
+      return isLeapYear(year) ? 29 : 28;
+    }
+
+    function isTodayEvent(eventMonth, eventDay) {
+      const now = getEffectiveNow();
+      const y = now.getFullYear();
+      let targetDay = eventDay;
+      if (eventMonth === 2 && eventDay === 29) {
+        targetDay = getActualFebDay(y);
+      }
+      return now.getMonth() + 1 === eventMonth && now.getDate() === targetDay;
+    }
+
+    function getNextDate(month, day, hour = 0) {
+      const now = getEffectiveNow();
+      let year = now.getFullYear();
+      
+      let targetDay = day;
+      if (month === 2 && day === 29) {
+        targetDay = getActualFebDay(year);
+      }
+
+      let target = new Date(year, month - 1, targetDay, hour, 0, 0);
+      const endOfEventDay = new Date(year, month - 1, targetDay, 23, 59, 59);
+      
+      if (now > endOfEventDay) {
+        year++;
+        let nextTargetDay = day;
+        if (month === 2 && day === 29) {
+          nextTargetDay = getActualFebDay(year);
+        }
+        target = new Date(year, month - 1, nextTargetDay, hour, 0, 0);
+      }
+      return target;
+    }
+
+    function getSortedEvents() {
+      const now = getEffectiveNow();
+      let list = [...eventsData].sort((a, b) => {
+        const isAToday = isTodayEvent(a.month, a.day);
+        const isBToday = isTodayEvent(b.month, b.day);
+        if (isAToday && !isBToday) return -1;
+        if (!isAToday && isBToday) return 1;
+
+        const timeA = getNextDate(a.month, a.day, a.hour || 0) - now;
+        const timeB = getNextDate(b.month, b.day, b.hour || 0) - now;
+        return timeA - timeB;
+      });
+
+      const y = now.getFullYear();
+      let qkDate = new Date(y, 8, 2, 0, 0, 0);
+      if (now > new Date(y, 8, 2, 23, 59, 59)) {
+        qkDate = new Date(y + 1, 8, 2, 0, 0, 0);
+      }
+      
+      const oneDayBeforeQK = new Date(qkDate.getTime() - 24 * 60 * 60 * 1000);
+
+      const qkIndex = list.findIndex(e => e.id === 'quockhanh');
+      const kgIndex = list.findIndex(e => e.id === 'khaigiang');
+
+      if (qkIndex !== -1 && kgIndex !== -1) {
+        if (now < oneDayBeforeQK && now < qkDate) {
+          const kgItem = list.splice(kgIndex, 1)[0];
+          const newQkIndex = list.findIndex(e => e.id === 'quockhanh');
+          list.splice(newQkIndex, 0, kgItem);
+        }
+      }
+
+      return list;
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    function renderUI() {
+      const sortedEvents = getSortedEvents();
+      const countdownTab = document.getElementById('tabCountdown');
+      const infoTab = document.getElementById('tabInfo');
+
+      countdownTab.innerHTML = sortedEvents.map(e => `
+        <div class="event-row">
+          <div class="event-info">${e.title}</div>
+          <div class="event-badge" id="badge-${e.id}">Đang tính...</div>
+        </div>
+      `).join('');
+
+      infoTab.innerHTML = sortedEvents.map(e => `
+        <div class="info-card">
+          <div class="info-title">${e.title}</div>
+          <div class="info-time">🗓️ Thời gian: ${e.timeText}</div>
+          <div class="info-desc">${e.desc}</div>
+          <button class="btn-detail-link" onclick="openModal('${e.id}')">
+            📖 Đọc thông tin & ý nghĩa chi tiết...
+          </button>
+        </div>
+      `).join('');
+    }
+
+    let lastFeaturedId = "";
+
+    function updateTimers() {
+      const now = getEffectiveNow();
+      const sortedEvents = getSortedEvents();
+      const featured = sortedEvents[0]; 
+
+      if (featured) {
+        if (featured.id !== lastFeaturedId) {
+          lastFeaturedId = featured.id;
+          renderUI();
+        }
+
+        const isToday = isTodayEvent(featured.month, featured.day);
+        const banner = document.getElementById('celebrationBanner');
+        const countdownBoxes = document.getElementById('countdownBoxes');
+
+        if (isToday) {
+          banner.style.display = "block";
+          banner.innerHTML = `🎉 CHÚC MỪNG ${featured.title.toUpperCase()}! 🎉`;
+          
+          document.getElementById('featuredTitle').innerText = `✨ HÔM NAY LÀ: ${featured.title} ✨`;
+          document.getElementById('featuredSubtitle').innerText = `Sự kiện đang diễn ra trọn vẹn trong hôm nay!`;
+          
+          countdownBoxes.style.display = "none";
+
+          if (Date.now() - lastConfettiTime > 4000) {
+            triggerConfetti();
+            lastConfettiTime = Date.now();
+          }
+        } else {
+          banner.style.display = "none";
+          countdownBoxes.style.display = "grid";
+
+          document.getElementById('featuredTitle').innerText = `${featured.title}`;
+          document.getElementById('featuredSubtitle').innerText = `Mục tiêu: ${featured.timeText}`;
+
+          const fTarget = getNextDate(featured.month, featured.day, featured.hour || 0);
+          const fDiff = fTarget - now;
+
+          if (fDiff > 0) {
+            document.getElementById('topD').innerText = String(Math.floor(fDiff / (1000*60*60*24))).padStart(2, '0');
+            document.getElementById('topH').innerText = String(Math.floor((fDiff % (1000*60*60*24)) / (1000*60*60))).padStart(2, '0');
+            document.getElementById('topM').innerText = String(Math.floor((fDiff % (1000*60*60)) / (1000*60))).padStart(2, '0');
+            document.getElementById('topS').innerText = String(Math.floor((fDiff % (1000*60)) / 1000)).padStart(2, '0');
+          }
+        }
+      }
+
+      sortedEvents.forEach(e => {
+        const badge = document.getElementById(`badge-${e.id}`);
+        if (!badge) return;
+
+        if (isTodayEvent(e.month, e.day)) {
+          badge.innerText = "🎉 ĐANG DIỄN RA!";
+          badge.classList.add("active-today");
+        } else {
+          badge.classList.remove("active-today");
+          const target = getNextDate(e.month, e.day, e.hour || 0);
+          const diff = target - now;
+          if (diff > 0) {
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            badge.innerText = `Còn ${d}d ${h}g ${m}p ${s}s`;
+          }
+        }
+      });
+    }
+
+    function openModal(id) {
+      const item = eventsData.find(e => e.id === id);
+      if (!item) return;
+      document.getElementById('mTitle').innerText = item.title;
+      document.getElementById('mTime').innerText = "🗓️ Thời gian: " + item.timeText;
+      document.getElementById('mBody').innerHTML = item.details;
+      document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    initSimInput();
+    renderUI();
+    updateTimers();
+    setInterval(updateTimers, 1000);
+  
+
+const V9 = (() => {
+  let speed = 1;
+  let simulated = false;
+  let paused = false;
+  let pauseTime = null;
+  let baseReal = Date.now();
+  let baseSim = Date.now();
+  let query = '';
+  let filter = 'all';
+  let sort = 'nearest';
+  let lastFeatured = null;
+
+  function now(){
+    if(!simulated) return new Date();
+    if(paused) return new Date(pauseTime);
+    return new Date(baseSim + (Date.now()-baseReal)*speed);
+  }
+
+  function leap(y){ return (y%4===0 && y%100!==0) || y%400===0; }
+  function febDay(y){ return leap(y)?29:28; }
+
+  function nextDate(e, current){
+    let y=current.getFullYear();
+    let d=(e.month===2&&e.day===29)?febDay(y):e.day;
+    let t=new Date(y,e.month-1,d,e.hour||0,0,0);
+    let end=new Date(y,e.month-1,d,23,59,59,999);
+    if(current>end){
+      y++;
+      d=(e.month===2&&e.day===29)?febDay(y):e.day;
+      t=new Date(y,e.month-1,d,e.hour||0,0,0);
+    }
+    return t;
+  }
+
+  function isToday(e,current){
+    const d=(e.month===2&&e.day===29)?febDay(current.getFullYear()):e.day;
+    return current.getMonth()+1===e.month && current.getDate()===d;
+  }
+
+  function featuredEvent(current){
+    const y=current.getFullYear();
+    const qk=new Date(y,8,2,0,0,0);
+    const kg=new Date(y,8,5,7,0,0);
+    const switchAt=new Date(y,8,1,0,0,0);
+    if(current < switchAt){ return eventsData.find(e=>e.id==='khaigiang'); }
+    if(current < new Date(y,8,3,0,0,0) || current < kg){
+      return eventsData.find(e=>e.id==='quockhanh');
+    }
+    return [...eventsData]
+      .filter(e=>e.id!=='khaigiang' && e.id!=='quockhanh')
+      .sort((a,b)=>nextDate(a,current)-nextDate(b,current))[0] || eventsData.find(e=>e.id==='khaigiang');
+  }
+
+  function lowerEvents(current){
+    let list=[...eventsData];
+    const q=query.trim().toLowerCase();
+    list=list.filter(e=>{
+      const okSearch=!q || e.title.toLowerCase().includes(q) || e.desc.toLowerCase().includes(q) || e.timeText.toLowerCase().includes(q);
+      const okFilter=filter==='all' || (filter==='today'&&isToday(e,current)) || (filter==='upcoming'&&!isToday(e,current));
+      return okSearch && okFilter;
+    });
+    list.sort((a,b)=>{
+      const diffA=nextDate(a,current)-current;
+      const diffB=nextDate(b,current)-current;
+      return sort==='farthest' ? diffB-diffA : diffA-diffB;
+    });
+    const qi=list.findIndex(e=>e.id==='quockhanh');
+    const ki=list.findIndex(e=>e.id==='khaigiang');
+    if(qi!==-1&&ki!==-1&&qi>ki){
+      const qk=list.splice(qi,1)[0];
+      const newKi=list.findIndex(e=>e.id==='khaigiang');
+      list.splice(newKi,0,qk);
+    }
+    return list;
+  }
+
+  function fmt(diff){
+    if(diff<0)diff=0;
+    const d=Math.floor(diff/86400000),h=Math.floor(diff%86400000/3600000),m=Math.floor(diff%3600000/60000),s=Math.floor(diff%60000/1000);
+    return `${d}d ${h}g ${m}p ${s}s`;
+  }
+
+  function setSimulation(date){
+    baseSim=date.getTime();
+    baseReal=Date.now();
+    simulated=true;
+    paused=false;
+    pauseTime=null;
+    const status=document.getElementById('simStatus');
+    if(status)status.innerHTML=`⚡ Đang giả lập tại mốc: <b style="color:#FFE600">${date.toLocaleString('vi-VN')}</b>`;
+    document.getElementById('pauseSimBtn').textContent='⏸️ Tạm dừng mô phỏng';
+    render();
+  }
+
+  function reset(){
+    simulated=false;paused=false;speed=1;baseReal=Date.now();baseSim=Date.now();pauseTime=null;
+    document.getElementById('simSpeed').value='1';
+    document.getElementById('pauseSimBtn').textContent='⏸️ Tạm dừng mô phỏng';
+    initSimInput();
+    document.getElementById('simStatus').innerHTML='Đang ở: <b>Thời gian thực</b>';
+    render();
+  }
+
+  function jumpNext(){
+    const t=now();
+    const all=[...eventsData].sort((a,b)=>nextDate(a,t)-nextDate(b,t));
+    const target=all.find(e=>!isToday(e,t))||all[0];
+    const dt=nextDate(target,t);
+    const input=document.getElementById('simTimeInput');
+    const local=new Date(dt.getTime()-dt.getTimezoneOffset()*60000);
+    input.value=local.toISOString().slice(0,16);
+    setSimulation(dt);
+  }
+
+  function togglePause(){
+    if(!simulated)return;
+    if(!paused){pauseTime=now().getTime();paused=true;document.getElementById('pauseSimBtn').textContent='▶️ Tiếp tục mô phỏng';}
+    else{baseSim=pauseTime;baseReal=Date.now();paused=false;document.getElementById('pauseSimBtn').textContent='⏸️ Tạm dừng mô phỏng';}
+    render();
+  }
+
+  function render(){
+    const current=now();
+    const featured=featuredEvent(current);
+    const fTarget=nextDate(featured,current);
+    const diff=fTarget-current;
+    const banner=document.getElementById('celebrationBanner');
+    const boxes=document.getElementById('countdownBoxes');
+    const title=document.getElementById('featuredTitle');
+    const subtitle=document.getElementById('featuredSubtitle');
+
+    if(isToday(featured,current)){
+      banner.style.display='block';
+      banner.innerHTML=`🎉 CHÚC MỪNG ${featured.title.toUpperCase()}! 🎉`;
+      title.innerText=`✨ HÔM NAY LÀ: ${featured.title} ✨`;
+      subtitle.innerText='Sự kiện đang diễn ra trọn vẹn trong hôm nay!';
+      boxes.style.display='none';
+    }else{
+      banner.style.display='none';
+      boxes.style.display='grid';
+      title.innerText=featured.title;
+      subtitle.innerText=`Mục tiêu: ${featured.timeText}`;
+      document.getElementById('topD').innerText=String(Math.floor(diff/86400000)).padStart(2,'0');
+      document.getElementById('topH').innerText=String(Math.floor(diff%86400000/3600000)).padStart(2,'0');
+      document.getElementById('topM').innerText=String(Math.floor(diff%3600000/60000)).padStart(2,'0');
+      document.getElementById('topS').innerText=String(Math.floor(diff%60000/1000)).padStart(2,'0');
+    }
+
+    const lower=lowerEvents(current);
+    const tab=document.getElementById('tabCountdown');
+    const info=document.getElementById('tabInfo');
+    tab.innerHTML=lower.map(e=>{
+      const d=nextDate(e,current)-current;
+      return `<div class="event-row"><div class="event-info">${e.title}</div><div class="event-badge ${isToday(e,current)?'active-today':''}" id="v9-${e.id}">${isToday(e,current)?'🎉 ĐANG DIỄN RA!':'Còn '+fmt(d)}</div></div>`;
+    }).join('') || '<div class="empty-state">Không tìm thấy sự kiện phù hợp.</div>';
+    info.innerHTML=lower.map(e=>`<div class="info-card"><div class="info-title">${e.title}</div><div class="info-time">🗓️ Thời gian: ${e.timeText}</div><div class="info-desc">${e.desc}</div><button class="btn-detail-link" data-id="${e.id}" type="button">📖 Đọc thông tin & ý nghĩa chi tiết...</button></div>`).join('') || '<div class="empty-state">Không có dữ liệu phù hợp.</div>';
+    document.querySelectorAll('.btn-detail-link[data-id]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.id)));
+
+    document.getElementById('liveClock').textContent=current.toLocaleTimeString('vi-VN');
+    document.getElementById('simSpeedStatus').textContent=simulated?` • ${paused?'PAUSED':speed+'×'}`:'';
+  }
+
+  function bind(){
+    document.getElementById('eventSearch').addEventListener('input',e=>{query=e.target.value;render();});
+    document.getElementById('eventFilter').addEventListener('change',e=>{filter=e.target.value;render();});
+    document.getElementById('eventSort').addEventListener('change',e=>{sort=e.target.value;render();});
+    document.getElementById('simSpeed').addEventListener('change',e=>{
+      const current=now().getTime();speed=Number(e.target.value)||1;baseSim=current;baseReal=Date.now();render();
+    });
+    document.getElementById('pauseSimBtn').addEventListener('click',togglePause);
+    document.getElementById('nextEventBtn').addEventListener('click',jumpNext);
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+    window.startSimulation=()=>{const v=document.getElementById('simTimeInput').value;if(!v){alert('Vui lòng chọn thời gian muốn trải nghiệm!');return;}setSimulation(new Date(v));};
+    window.resetRealTime=reset;
+  }
+
+  return {bind,render};
+})();
+
+V9.bind();
+V9.render();
+setInterval(V9.render,250);
+
+</script>
+</body>
+</html>
