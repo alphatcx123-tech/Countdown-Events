@@ -1079,9 +1079,6 @@
     }
 
     initSimInput();
-    renderUI();
-    updateTimers();
-    setInterval(updateTimers, 1000);
   
 
 const V9 = (() => {
@@ -1095,6 +1092,7 @@ const V9 = (() => {
   let filter = 'all';
   let sort = 'nearest';
   let lastFeatured = null;
+  let lastLowerKey = '';
 
   function now(){
     if(!simulated) return new Date();
@@ -1214,36 +1212,70 @@ const V9 = (() => {
     const boxes=document.getElementById('countdownBoxes');
     const title=document.getElementById('featuredTitle');
     const subtitle=document.getElementById('featuredSubtitle');
+    const today=isToday(featured,current);
 
-    if(isToday(featured,current)){
-      banner.style.display='block';
-      banner.innerHTML=`🎉 CHÚC MỪNG ${featured.title.toUpperCase()}! 🎉`;
-      title.innerText=`✨ HÔM NAY LÀ: ${featured.title} ✨`;
-      subtitle.innerText='Sự kiện đang diễn ra trọn vẹn trong hôm nay!';
-      boxes.style.display='none';
+    if(today){
+      if(banner.style.display!=='block') banner.style.display='block';
+      const bannerText=`🎉 CHÚC MỪNG ${featured.title.toUpperCase()}! 🎉`;
+      if(banner.innerHTML!==bannerText) banner.innerHTML=bannerText;
+      const titleText=`✨ HÔM NAY LÀ: ${featured.title} ✨`;
+      if(title.textContent!==titleText) title.innerText=titleText;
+      const subtitleText='Sự kiện đang diễn ra trọn vẹn trong hôm nay!';
+      if(subtitle.textContent!==subtitleText) subtitle.innerText=subtitleText;
+      if(boxes.style.display!=='none') boxes.style.display='none';
     }else{
-      banner.style.display='none';
-      boxes.style.display='grid';
-      title.innerText=featured.title;
-      subtitle.innerText=`Mục tiêu: ${featured.timeText}`;
-      document.getElementById('topD').innerText=String(Math.floor(diff/86400000)).padStart(2,'0');
-      document.getElementById('topH').innerText=String(Math.floor(diff%86400000/3600000)).padStart(2,'0');
-      document.getElementById('topM').innerText=String(Math.floor(diff%3600000/60000)).padStart(2,'0');
-      document.getElementById('topS').innerText=String(Math.floor(diff%60000/1000)).padStart(2,'0');
+      if(banner.style.display!=='none') banner.style.display='none';
+      if(boxes.style.display!=='grid') boxes.style.display='grid';
+      if(title.textContent!==featured.title) title.innerText=featured.title;
+      const subtitleText=`Mục tiêu: ${featured.timeText}`;
+      if(subtitle.textContent!==subtitleText) subtitle.innerText=subtitleText;
+
+      const d=String(Math.max(0,Math.floor(diff/86400000))).padStart(2,'0');
+      const h=String(Math.max(0,Math.floor(diff%86400000/3600000))).padStart(2,'0');
+      const m=String(Math.max(0,Math.floor(diff%3600000/60000))).padStart(2,'0');
+      const s=String(Math.max(0,Math.floor(diff%60000/1000))).padStart(2,'0');
+      const topD=document.getElementById('topD');
+      const topH=document.getElementById('topH');
+      const topM=document.getElementById('topM');
+      const topS=document.getElementById('topS');
+      if(topD.textContent!==d) topD.innerText=d;
+      if(topH.textContent!==h) topH.innerText=h;
+      if(topM.textContent!==m) topM.innerText=m;
+      if(topS.textContent!==s) topS.innerText=s;
     }
 
     const lower=lowerEvents(current);
     const tab=document.getElementById('tabCountdown');
     const info=document.getElementById('tabInfo');
-    tab.innerHTML=lower.map(e=>{
-      const d=nextDate(e,current)-current;
-      return `<div class="event-row"><div class="event-info">${e.title}</div><div class="event-badge ${isToday(e,current)?'active-today':''}" id="v9-${e.id}">${isToday(e,current)?'🎉 ĐANG DIỄN RA!':'Còn '+fmt(d)}</div></div>`;
-    }).join('') || '<div class="empty-state">Không tìm thấy sự kiện phù hợp.</div>';
-    info.innerHTML=lower.map(e=>`<div class="info-card"><div class="info-title">${e.title}</div><div class="info-time">🗓️ Thời gian: ${e.timeText}</div><div class="info-desc">${e.desc}</div><button class="btn-detail-link" data-id="${e.id}" type="button">📖 Đọc thông tin & ý nghĩa chi tiết...</button></div>`).join('') || '<div class="empty-state">Không có dữ liệu phù hợp.</div>';
-    document.querySelectorAll('.btn-detail-link[data-id]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.id)));
+    const lowerKey=lower.map(e=>e.id).join('|');
 
-    document.getElementById('liveClock').textContent=current.toLocaleTimeString('vi-VN');
-    document.getElementById('simSpeedStatus').textContent=simulated?` • ${paused?'PAUSED':speed+'×'}`:'';
+    if(lowerKey!==lastLowerKey){
+      lastLowerKey=lowerKey;
+      tab.innerHTML=lower.map(e=>`<div class="event-row"><div class="event-info">${e.title}</div><div class="event-badge ${isToday(e,current)?'active-today':''}" id="v9-${e.id}"></div></div>`).join('') || '<div class="empty-state">Không tìm thấy sự kiện phù hợp.</div>';
+      info.innerHTML=lower.map(e=>`<div class="info-card"><div class="info-title">${e.title}</div><div class="info-time">🗓️ Thời gian: ${e.timeText}</div><div class="info-desc">${e.desc}</div><button class="btn-detail-link" data-id="${e.id}" type="button">📖 Đọc thông tin & ý nghĩa chi tiết...</button></div>`).join('') || '<div class="empty-state">Không có dữ liệu phù hợp.</div>';
+      document.querySelectorAll('.btn-detail-link[data-id]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.id)));
+    }
+
+    lower.forEach(e=>{
+      const badge=document.getElementById(`v9-${e.id}`);
+      if(!badge) return;
+      if(isToday(e,current)){
+        const text='🎉 ĐANG DIỄN RA!';
+        if(badge.textContent!==text) badge.innerText=text;
+        if(!badge.classList.contains('active-today')) badge.classList.add('active-today');
+      }else{
+        if(badge.classList.contains('active-today')) badge.classList.remove('active-today');
+        const text='Còn '+fmt(nextDate(e,current)-current);
+        if(badge.textContent!==text) badge.innerText=text;
+      }
+    });
+
+    const liveClock=document.getElementById('liveClock');
+    const liveClockText=current.toLocaleTimeString('vi-VN');
+    if(liveClock.textContent!==liveClockText) liveClock.textContent=liveClockText;
+    const simSpeedStatus=document.getElementById('simSpeedStatus');
+    const simSpeedText=simulated?` • ${paused?'PAUSED':speed+'×'}`:'';
+    if(simSpeedStatus.textContent!==simSpeedText) simSpeedStatus.textContent=simSpeedText;
   }
 
   function bind(){
